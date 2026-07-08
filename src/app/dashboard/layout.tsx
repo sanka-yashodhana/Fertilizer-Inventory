@@ -12,7 +12,7 @@ export default function DashboardLayout({
       {/* Sidebar */}
       <aside className="w-64 bg-slate-900 text-white p-6 flex flex-col justify-between">
         <div>
-          <h2 className="text-xl font-bold tracking-wider mb-8 text-emerald-400">🌱 FertiTrack</h2>
+          <Link href="/"><h2 className="text-xl font-bold tracking-wider mb-8 text-emerald-400">🌱 FertiTrack</h2></Link>
           <nav className="space-y-2">
             <Link href="/dashboard" className="block px-4 py-2.5 rounded hover:bg-slate-800 transition">Dashboard Overview</Link>
             <Link href="/dashboard/products" className="block px-4 py-2.5 rounded hover:bg-slate-800 transition font-medium text-emerald-300">Product Catalog</Link>
