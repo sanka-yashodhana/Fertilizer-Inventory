@@ -152,34 +152,56 @@ export default function TransactionsPage() {
               <p className="text-sm text-slate-500">No transaction operations saved to historical ledger yet.</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Timestamp</TableHead>
-                  <TableHead>Operation</TableHead>
-                  <TableHead>Product Identity</TableHead>
-                  <TableHead>Source Lot</TableHead>
-                  <TableHead className="text-right">Volume Shift</TableHead>
-                  <TableHead>Allocation Notes</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Timestamp</TableHead>
+                      <TableHead>Operation</TableHead>
+                      <TableHead>Product Identity</TableHead>
+                      <TableHead>Source Lot</TableHead>
+                      <TableHead className="text-right">Volume Shift</TableHead>
+                      <TableHead>Allocation Notes</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {logs.map((log) => (
+                      <TableRow key={log._id}>
+                        <TableCell className="text-slate-500 text-xs">{new Date(log.createdAt).toLocaleString()}</TableCell>
+                        <TableCell>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-50 text-red-700">
+                            {log.type}
+                          </span>
+                        </TableCell>
+                        <TableCell className="font-medium text-slate-900">{log.product?.name || 'Unknown'}</TableCell>
+                        <TableCell className="font-mono text-xs font-bold text-slate-500">{log.batch?.batchNumber || 'Global Adj.'}</TableCell>
+                        <TableCell className="text-right font-semibold text-red-600">-{log.quantity}</TableCell>
+                        <TableCell className="text-slate-600 text-sm truncate max-w-[200px] sm:max-w-[200px]">{log.reason}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="space-y-3 md:hidden">
                 {logs.map((log) => (
-                  <TableRow key={log._id}>
-                    <TableCell className="text-slate-500 text-xs">{new Date(log.createdAt).toLocaleString()}</TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-50 text-red-700">
+                  <div key={log._id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs text-slate-500">{new Date(log.createdAt).toLocaleString()}</p>
+                      <span className="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">
                         {log.type}
                       </span>
-                    </TableCell>
-                    <TableCell className="font-medium text-slate-900">{log.product?.name || 'Unknown'}</TableCell>
-                    <TableCell className="font-mono text-xs font-bold text-slate-500">{log.batch?.batchNumber || 'Global Adj.'}</TableCell>
-                    <TableCell className="text-right font-semibold text-red-600">-{log.quantity}</TableCell>
-                    <TableCell className="text-slate-600 text-sm max-w-[200px] truncate">{log.reason}</TableCell>
-                  </TableRow>
+                    </div>
+                    <div className="mt-3 grid gap-2">
+                      <p className="text-sm font-semibold text-slate-900">{log.product?.name || 'Unknown'}</p>
+                      <p className="text-sm text-slate-600">Lot: {log.batch?.batchNumber || 'Global Adj.'}</p>
+                      <p className="text-sm text-slate-600">Volume Shift: <span className="font-semibold text-red-600">-{log.quantity}</span></p>
+                      <p className="text-sm text-slate-600 truncate">{log.reason}</p>
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

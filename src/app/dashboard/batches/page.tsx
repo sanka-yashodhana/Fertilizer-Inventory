@@ -149,7 +149,7 @@ export default function BatchesPage() {
                   <Label htmlFor="batchNumber">Batch / Lot Number</Label>
                   <Input id="batchNumber" required value={formData.batchNumber} onChange={(e) => setFormData({...formData, batchNumber: e.target.value})} placeholder="e.g. BAT-2026-001" />
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div className="grid gap-1">
                     <Label htmlFor="qty">Qty Received</Label>
                     <Input id="qty" type="number" min="1" value={formData.quantityReceived} onChange={(e) => setFormData({...formData, quantityReceived: Number(e.target.value)})} />
@@ -167,7 +167,7 @@ export default function BatchesPage() {
                   <Label htmlFor="cost">Cost Price per Unit</Label>
                   <Input id="cost" type="number" min="0" value={formData.costPrice} onChange={(e) => setFormData({...formData, costPrice: Number(e.target.value)})} placeholder="LKR / Unit" />
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div className="grid gap-1">
                     <Label htmlFor="mfg">Mfg. Date</Label>
                     <Input id="mfg" type="date" value={formData.manufactureDate} onChange={(e) => setFormData({...formData, manufactureDate: e.target.value})} />
@@ -199,37 +199,64 @@ export default function BatchesPage() {
               <p className="text-sm text-slate-500">No physical batches registered yet.</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Batch No</TableHead>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Available Stock</TableHead>
-                  <TableHead>Unit Cost</TableHead>
-                  <TableHead>Expiration Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Batch No</TableHead>
+                      <TableHead>Product</TableHead>
+                      <TableHead>Available Stock</TableHead>
+                      <TableHead>Unit Cost</TableHead>
+                      <TableHead>Expiration Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {batches.map((b) => {
+                      const isExpired = new Date() > new Date(b.expiryDate);
+                      return (
+                        <TableRow key={b._id}>
+                          <TableCell className="font-mono text-xs font-bold text-slate-600">{b.batchNumber}</TableCell>
+                          <TableCell className="font-medium text-slate-900">{b.product?.name || 'Unknown Product'}</TableCell>
+                          <TableCell className="font-semibold text-slate-700">
+                            {b.currentQuantity} / {b.quantityReceived} {b.unit}
+                          </TableCell>
+                          <TableCell>${b.costPrice}</TableCell>
+                          <TableCell>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isExpired ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                              {isExpired ? 'Expired' : `Expires ${new Date(b.expiryDate).toLocaleDateString()}`}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="space-y-3 md:hidden">
                 {batches.map((b) => {
                   const isExpired = new Date() > new Date(b.expiryDate);
                   return (
-                    <TableRow key={b._id}>
-                      <TableCell className="font-mono text-xs font-bold text-slate-600">{b.batchNumber}</TableCell>
-                      <TableCell className="font-medium text-slate-900">{b.product?.name || 'Unknown Product'}</TableCell>
-                      <TableCell className="font-semibold text-slate-700">
-                        {b.currentQuantity} / {b.quantityReceived} {b.unit}
-                      </TableCell>
-                      <TableCell>${b.costPrice}</TableCell>
-                      <TableCell>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isExpired ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                    <div key={b._id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-semibold uppercase text-slate-500">Batch</p>
+                          <p className="font-mono text-sm font-semibold text-slate-900">{b.batchNumber}</p>
+                        </div>
+                        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${isExpired ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'}`}>
                           {isExpired ? 'Expired' : `Expires ${new Date(b.expiryDate).toLocaleDateString()}`}
                         </span>
-                      </TableCell>
-                    </TableRow>
+                      </div>
+                      <div className="mt-3 grid gap-2">
+                        <p className="text-sm font-semibold text-slate-900">{b.product?.name || 'Unknown Product'}</p>
+                        <p className="text-sm text-slate-600">Stock: {b.currentQuantity}/{b.quantityReceived} {b.unit}</p>
+                        <p className="text-sm text-slate-600">Cost: ${b.costPrice}</p>
+                      </div>
+                    </div>
                   );
                 })}
-              </TableBody>
-            </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

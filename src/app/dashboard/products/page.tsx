@@ -166,7 +166,7 @@ export default function ProductsPage() {
                 </div>
                 
                 {/* NPK Parameters Grouped */}
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <div className="grid gap-1">
                     <Label htmlFor="nitrogen">N (%)</Label>
                     <Input id="nitrogen" type="number" min="0" value={formData.nitrogen} onChange={(e) => setFormData({...formData, nitrogen: Number(e.target.value)})} />
@@ -207,34 +207,58 @@ export default function ProductsPage() {
               <p className="text-sm text-slate-500">No products configured yet. Click '+ Add New Product' to register your first profile.</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>SKU</TableHead>
-                  <TableHead>Product Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>NPK Composition (N-P-K)</TableHead>
-                  <TableHead className="text-right">Alert Level Min</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>SKU</TableHead>
+                      <TableHead>Product Name</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>NPK Composition (N-P-K)</TableHead>
+                      <TableHead className="text-right">Alert Level Min</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {products.map((product) => (
+                      <TableRow key={product._id}>
+                        <TableCell className="font-mono text-xs font-bold text-slate-600">{product.sku}</TableCell>
+                        <TableCell className="font-medium text-slate-900">{product.name}</TableCell>
+                        <TableCell>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800">
+                            {product.category}
+                          </span>
+                        </TableCell>
+                        <TableCell className="font-medium text-slate-700">
+                          {product.npkRatio.nitrogen}-{product.npkRatio.phosphorus}-{product.npkRatio.potassium}
+                        </TableCell>
+                        <TableCell className="text-right text-slate-600 font-mono">{product.minThreshold} units</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="space-y-3 md:hidden">
                 {products.map((product) => (
-                  <TableRow key={product._id}>
-                    <TableCell className="font-mono text-xs font-bold text-slate-600">{product.sku}</TableCell>
-                    <TableCell className="font-medium text-slate-900">{product.name}</TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800">
+                  <div key={product._id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
+                      <div>
+                        <p className="text-xs font-semibold uppercase text-slate-500">SKU</p>
+                        <p className="font-mono text-sm font-semibold text-slate-900">{product.sku}</p>
+                      </div>
+                      <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-800">
                         {product.category}
                       </span>
-                    </TableCell>
-                    <TableCell className="font-medium text-slate-700">
-                      {product.npkRatio.nitrogen}-{product.npkRatio.phosphorus}-{product.npkRatio.potassium}
-                    </TableCell>
-                    <TableCell className="text-right text-slate-600 font-mono">{product.minThreshold} units</TableCell>
-                  </TableRow>
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      <p className="text-sm font-semibold text-slate-900">{product.name}</p>
+                      <p className="text-sm text-slate-600">NPK: {product.npkRatio.nitrogen}-{product.npkRatio.phosphorus}-{product.npkRatio.potassium}</p>
+                      <p className="text-sm text-slate-600">Alert Level: {product.minThreshold} units</p>
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

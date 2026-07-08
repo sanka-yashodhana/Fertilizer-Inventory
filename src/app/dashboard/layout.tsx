@@ -1,38 +1,96 @@
-import React from 'react';
+"use client";
+
+import React, { useState } from 'react';
 import Link from 'next/link';
 import AuthControls from '@/components/AuthControls';
+
+const navLinks = [
+  { href: '/dashboard', label: 'Dashboard Overview' },
+  { href: '/dashboard/products', label: 'Product Catalog' },
+  { href: '/dashboard/batches', label: 'Stock Batches' },
+  { href: '/dashboard/transactions', label: 'Transactions Log' },
+];
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [drawerOpen, setDrawerOpen] = useState(false);
   return (
-    <div className="flex h-screen bg-slate-50">
-      {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-white p-6 flex flex-col justify-between">
-        <div>
-          <Link href="/"><h2 className="text-xl font-bold tracking-wider mb-8 text-emerald-400">🌱 FertiTrack</h2></Link>
-          <nav className="space-y-2">
-            <Link href="/dashboard" className="block px-4 py-2.5 rounded hover:bg-slate-800 transition">Dashboard Overview</Link>
-            <Link href="/dashboard/products" className="block px-4 py-2.5 rounded hover:bg-slate-800 transition font-medium text-emerald-300">Product Catalog</Link>
-            <Link href="/dashboard/batches" className="block px-4 py-2.5 rounded hover:bg-slate-800 transition">Stock Batches</Link>
-            <Link href="/dashboard/transactions" className="block px-4 py-2.5 rounded hover:bg-slate-800 transition">Transactions Log</Link>
-          </nav>
-        </div>
-        <div className="text-xs text-slate-400 border-t border-slate-800 pt-4">
-          Inventory System v1.0
-        </div>
-      </aside>
+    <div className="relative min-h-screen bg-slate-50">
+      <header className="sticky top-0 z-20 bg-blue-950 border-b border-slate-200">
+        <div className="mx-auto flex max-w-screen-2xl items-center justify-between gap-4 px-4 py-3 md:px-8">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 md:hidden"
+              onClick={() => setDrawerOpen(true)}
+              aria-label="Open navigation menu"
+            >
+              ☰
+            </button>
+            <Link href="/" className="text-2xl font-bold tracking-wider text-emerald-500">
+              🌱 Green Agro
+            </Link>
+          </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-8">
-          <h1 className="font-semibold text-slate-800 text-lg">Inventory Management Console</h1>
-          <AuthControls />
-        </header>
-        
-        <main className="flex-1 overflow-y-auto p-8">
+          <nav className="hidden items-center gap-3 md:flex">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="rounded-full px-4 py-2 text-sm font-medium text-white transition hover:bg-green-800"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <AuthControls />
+          </div>
+        </div>
+      </header>
+
+      <div className="flex min-h-[calc(100vh-64px)] flex-col overflow-hidden md:flex-row">
+        <div
+          className={`fixed inset-0 z-30 bg-black/40 transition-opacity duration-300 md:hidden ${drawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+          onClick={() => setDrawerOpen(false)}
+        />
+
+        <aside
+          className={`fixed inset-y-0 left-0 z-40 w-72 transform bg-slate-900 p-6 text-white transition-transform duration-300 md:hidden ${drawerOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        >
+          <div className="mb-6 flex items-center justify-between">
+            <span className="text-lg font-semibold text-emerald-300">Navigation</span>
+            <button
+              type="button"
+              className="rounded-md bg-slate-800 px-3 py-2 text-sm text-slate-200 hover:bg-slate-700"
+              onClick={() => setDrawerOpen(false)}
+              aria-label="Close navigation menu"
+            >
+              ✕
+            </button>
+          </div>
+          <nav className="space-y-2">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="block rounded-lg px-4 py-3 text-sm font-medium text-slate-100 transition hover:bg-slate-800"
+                onClick={() => setDrawerOpen(false)}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+          <div className="mt-8 border-t border-slate-700 pt-4 text-xs text-slate-400">
+            Inventory System v1.0
+          </div>
+        </aside>
+
+        <main className="flex-1 overflow-y-auto p-4 md:p-8">
           {children}
         </main>
       </div>
