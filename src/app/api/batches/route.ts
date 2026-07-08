@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Batch from '../../../_models/Batch'; // Adjust based on your folder structure
+import '../../../_models/Product'; // Import for model registration
 
 // 1. GET ALL BATCHES (WITH PRODUCT INFORMATION POPULATED)
 export async function GET() {
