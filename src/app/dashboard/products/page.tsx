@@ -116,10 +116,12 @@ export default function ProductsPage() {
 
         {/* Form Modal Popup */}
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
-              + Add New Product
-            </Button>
+          <DialogTrigger
+            render={
+              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" />
+            }
+          >
+            + Add New Product
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <form onSubmit={handleSubmit}>
