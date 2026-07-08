@@ -1,0 +1,173 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+interface ProductOption { _id: string; name: string; sku: string; }
+interface LogItem {
+  _id: string;
+  type: string;
+  product: ProductOption;
+  batch?: { batchNumber: string };
+  quantity: number;
+  reason?: string;
+  createdAt: string;
+}
+
+export default function TransactionsPage() {
+  const [logs, setLogs] = useState<LogItem[]>([]);
+  const [products, setProducts] = useState<ProductOption[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+
+  // Form State
+  const [formData, setFormData] = useState({
+    productId: '',
+    quantity: 1,
+    reason: '',
+    performedBy: 'Admin Console'
+  });
+
+  async function loadData() {
+    setLoading(true);
+    try {
+      const logRes = await fetch('/api/transactions');
+      const logJson = await logRes.json();
+      if (logJson.success) setLogs(logJson.data);
+
+      const prodRes = await fetch('/api/products');
+      const prodJson = await prodRes.json();
+      if (prodJson.success) {
+        setProducts(prodJson.data);
+        if (prodJson.data.length > 0) {
+          setFormData(prev => ({ ...prev, productId: prodJson.data[0]._id }));
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { loadData(); }, []);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setOpen(false);
+        loadData();
+        setFormData(prev => ({ ...prev, quantity: 1, reason: '' }));
+      } else {
+        alert(`Error: ${json.error}`);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Transactions Log</h2>
+          <p className="text-slate-500 text-sm">Review full inventory logs or execute an operational deduction entry.</p>
+        </div>
+
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger
+            render={
+              <Button className="bg-red-600 hover:bg-red-700 text-white" />
+            }
+          >
+            📤 Record Stock Out (Dispatch)
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <form onSubmit={handleSubmit}>
+              <DialogHeader>
+                <DialogTitle>Stock Dispatch Request</DialogTitle>
+                <DialogDescription>Deduct inventory amounts. System pulls from matching oldest batches automatically.</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="product">Target Product</Label>
+                  <select id="product" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.productId} onChange={(e) => setFormData({...formData, productId: e.target.value})}>
+                    {products.map(p => <option key={p._id} value={p._id}>{p.name} ({p.sku})</option>)}
+                  </select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="qty">Quantity to Remove</Label>
+                  <Input id="qty" type="number" min="1" value={formData.quantity} onChange={(e) => setFormData({...formData, quantity: Number(e.target.value)})} />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="reason">Reason / Purpose</Label>
+                  <Input id="reason" required value={formData.reason} onChange={(e) => setFormData({...formData, reason: e.target.value})} placeholder="e.g. Dispatched to Field Section B" />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button type="submit" className="bg-red-600 hover:bg-red-700 text-white">Approve and Deduct</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base font-semibold">Historical System Audit Log</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <p className="text-sm text-slate-500 animate-pulse">Parsing ledger history logs...</p>
+          ) : logs.length === 0 ? (
+            <div className="text-center py-12 border border-dashed rounded-lg">
+              <p className="text-sm text-slate-500">No transaction operations saved to historical ledger yet.</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Timestamp</TableHead>
+                  <TableHead>Operation</TableHead>
+                  <TableHead>Product Identity</TableHead>
+                  <TableHead>Source Lot</TableHead>
+                  <TableHead className="text-right">Volume Shift</TableHead>
+                  <TableHead>Allocation Notes</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logs.map((log) => (
+                  <TableRow key={log._id}>
+                    <TableCell className="text-slate-500 text-xs">{new Date(log.createdAt).toLocaleString()}</TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-50 text-red-700">
+                        {log.type}
+                      </span>
+                    </TableCell>
+                    <TableCell className="font-medium text-slate-900">{log.product?.name || 'Unknown'}</TableCell>
+                    <TableCell className="font-mono text-xs font-bold text-slate-500">{log.batch?.batchNumber || 'Global Adj.'}</TableCell>
+                    <TableCell className="text-right font-semibold text-red-600">-{log.quantity}</TableCell>
+                    <TableCell className="text-slate-600 text-sm max-w-[200px] truncate">{log.reason}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
