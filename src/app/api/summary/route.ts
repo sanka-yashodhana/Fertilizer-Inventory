@@ -1,18 +1,24 @@
 import { NextResponse } from 'next/server';
+import { getAuth } from '@clerk/nextjs/server';
 import dbConnect from '@/lib/dbConnect';
 import Product from '../../../_models/Product';
 import Batch from '../../../_models/Batch';
 import '../../../_models/Supplier'; // Import for model registration
 
-export async function GET() {
+export async function GET(request: Request) {
+  const session = await getAuth(request);
+  if (!session.userId) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     await dbConnect();
 
-    // 1. Get total distinct product profiles
-    const totalProducts = await Product.countDocuments();
+    // 1. Get total distinct product profiles for the user
+    const totalProducts = await Product.countDocuments({ userId: session.userId });
 
-    // 2. Fetch all active warehouse batches
-    const activeBatches = await Batch.find({ currentQuantity: { $gt: 0 } }).populate('product');
+    // 2. Fetch all active warehouse batches for the user
+    const activeBatches = await Batch.find({ userId: session.userId, currentQuantity: { $gt: 0 } }).populate('product');
 
     // 3. Process calculations for metrics
     let totalStockVolume = 0;
@@ -47,8 +53,8 @@ export async function GET() {
       }
     });
 
-    // 4. Query all products to crosscheck calculated volumes against their set minimum thresholds
-    const allProducts = await Product.find({});
+    // 4. Query all products for the user to crosscheck calculated volumes against their set minimum thresholds
+    const allProducts = await Product.find({ userId: session.userId });
     allProducts.forEach((prod) => {
       const currentVol = productVolumeMap[prod._id.toString()] || 0;
       if (currentVol <= prod.minThreshold) {

@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IBatch extends Document {
+  userId: string;
   batchNumber: string;
   product: mongoose.Types.ObjectId;
   quantityReceived: number;
@@ -14,6 +15,7 @@ export interface IBatch extends Document {
 }
 
 const BatchSchema: Schema = new Schema({
+  userId: { type: String, required: true },
   batchNumber: { type: String, required: true, unique: true, uppercase: true },
   product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
   quantityReceived: { type: Number, required: true, min: 0 },

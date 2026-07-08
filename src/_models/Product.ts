@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IProduct extends Document {
+  userId: string;
   name: string;
   sku: string; // Stock Keeping Unit (Unique Identifier)
   description?: string;
@@ -24,6 +25,7 @@ export interface IProduct extends Document {
 }
 
 const ProductSchema: Schema = new Schema({
+  userId: { type: String, required: true },
   name: { type: String, required: true, trim: true },
   sku: { type: String, required: true, unique: true, uppercase: true, trim: true },
   description: { type: String },

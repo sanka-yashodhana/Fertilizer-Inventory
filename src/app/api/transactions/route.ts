@@ -1,14 +1,20 @@
 import { NextResponse } from 'next/server';
+import { getAuth } from '@clerk/nextjs/server';
 import dbConnect from '@/lib/dbConnect';
 import Batch from '../../../_models/Batch';
 import Transaction from '../../../_models/Transaction';
 import Product from '../../../_models/Product';
 
 // 1. GET ALL TRANSACTIONS (HISTORICAL AUDIT LOG)
-export async function GET() {
+export async function GET(request: Request) {
+  const session = await getAuth(request);
+  if (!session.userId) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     await dbConnect();
-    const transactions = await Transaction.find({})
+    const transactions = await Transaction.find({ performedBy: session.userId })
       .populate('product')
       .populate('batch')
       .sort({ createdAt: -1 }); // Newest logs first
@@ -20,16 +26,23 @@ export async function GET() {
 
 // 2. DISPATCH / DEDUCT STOCK (STOCK OUT ENGINE WITH FIFO PROCESSING)
 export async function POST(request: Request) {
+  const session = await getAuth(request);
+  if (!session.userId) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     await dbConnect();
-    const { productId, quantity, reason, performedBy } = await request.json();
+    const { productId, quantity, reason } = await request.json();
 
     if (!productId || !quantity || quantity <= 0) {
       return NextResponse.json({ success: false, error: "Invalid product or quantity" }, { status: 400 });
     }
 
     // Find the oldest active batch matching this product that has available stock
+    // IMPORTANT: Also filter batches by the current user
     const activeBatches = await Batch.find({
+      userId: session.userId,
       product: productId,
       currentQuantity: { $gt: 0 }
     }).sort({ expiryDate: 1 }); // Sort by closest expiration date first (FIFO)
@@ -63,7 +76,7 @@ export async function POST(request: Request) {
         batch: batch._id,
         quantity: deduction,
         reason: reason || "Standard inventory dispatch",
-        performedBy: performedBy || "System Admin"
+        performedBy: session.userId // Use the authenticated user's ID
       });
 
       processedTransactions.push(transactionRecord);
