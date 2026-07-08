@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import AuthControls from '@/components/AuthControls';
 
 export default function DashboardLayout({
   children,
@@ -28,10 +29,7 @@ export default function DashboardLayout({
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-8">
           <h1 className="font-semibold text-slate-800 text-lg">Inventory Management Console</h1>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span>
-            <span className="text-sm text-slate-600 font-medium">Database Connected</span>
-          </div>
+          <AuthControls />
         </header>
         
         <main className="flex-1 overflow-y-auto p-8">

@@ -26,7 +26,7 @@ const BatchSchema: Schema = new Schema({
 }, { timestamps: true });
 
 // Virtual property to automatically check if a batch has hit its expiration point
-BatchSchema.virtual('isExpired').get(function() {
+BatchSchema.virtual('isExpired').get(function(this: IBatch) {
   return new Date() > this.expiryDate;
 });
 
