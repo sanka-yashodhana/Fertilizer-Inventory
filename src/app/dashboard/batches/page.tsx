@@ -47,19 +47,35 @@ export default function BatchesPage() {
     setLoading(true);
     try {
       const batchRes = await fetch('/api/batches');
-      const batchJson = await batchRes.json();
-      if (batchJson.success) setBatches(batchJson.data);
+      if (!batchRes.ok) {
+        const errJson = await batchRes.json().catch(() => null);
+        console.error('Batches API error:', batchRes.status, errJson);
+      } else {
+        const batchJson = await batchRes.json();
+        if (batchJson.success) {
+          setBatches(batchJson.data);
+        } else {
+          console.error('Batches API responded with error:', batchJson.error);
+        }
+      }
 
       const prodRes = await fetch('/api/products');
-      const prodJson = await prodRes.json();
-      if (prodJson.success) {
-        setProducts(prodJson.data);
-        if (prodJson.data.length > 0) {
-          setFormData(prev => ({ ...prev, product: prodJson.data[0]._id }));
+      if (!prodRes.ok) {
+        const errJson = await prodRes.json().catch(() => null);
+        console.error('Products API error:', prodRes.status, errJson);
+      } else {
+        const prodJson = await prodRes.json();
+        if (prodJson.success) {
+          setProducts(prodJson.data);
+          if (prodJson.data.length > 0) {
+            setFormData(prev => ({ ...prev, product: prodJson.data[0]._id }));
+          }
+        } else {
+          console.error('Products API responded with error:', prodJson.error);
         }
       }
     } catch (err) {
-      console.error("Data load failed:", err);
+      console.error('Data load failed:', err);
     } finally {
       setLoading(false);
     }

@@ -38,15 +38,31 @@ export default function TransactionsPage() {
     setLoading(true);
     try {
       const logRes = await fetch('/api/transactions');
-      const logJson = await logRes.json();
-      if (logJson.success) setLogs(logJson.data);
+      if (!logRes.ok) {
+        const errJson = await logRes.json().catch(() => null);
+        console.error('Transactions API error:', logRes.status, errJson);
+      } else {
+        const logJson = await logRes.json();
+        if (logJson.success) {
+          setLogs(logJson.data);
+        } else {
+          console.error('Transactions API responded with error:', logJson.error);
+        }
+      }
 
       const prodRes = await fetch('/api/products');
-      const prodJson = await prodRes.json();
-      if (prodJson.success) {
-        setProducts(prodJson.data);
-        if (prodJson.data.length > 0) {
-          setFormData(prev => ({ ...prev, productId: prodJson.data[0]._id }));
+      if (!prodRes.ok) {
+        const errJson = await prodRes.json().catch(() => null);
+        console.error('Products API error:', prodRes.status, errJson);
+      } else {
+        const prodJson = await prodRes.json();
+        if (prodJson.success) {
+          setProducts(prodJson.data);
+          if (prodJson.data.length > 0) {
+            setFormData(prev => ({ ...prev, productId: prodJson.data[0]._id }));
+          }
+        } else {
+          console.error('Products API responded with error:', prodJson.error);
         }
       }
     } catch (err) {

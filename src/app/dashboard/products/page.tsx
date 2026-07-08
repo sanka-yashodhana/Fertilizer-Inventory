@@ -50,10 +50,21 @@ export default function ProductsPage() {
     setLoading(true);
     try {
       const res = await fetch('/api/products');
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => null);
+        console.error('Products API error:', res.status, errJson);
+        return;
+      }
+
       const json = await res.json();
-      if (json.success) setProducts(json.data);
+      if (!json.success) {
+        console.error('Products API responded with error:', json.error);
+        return;
+      }
+
+      setProducts(json.data);
     } catch (err) {
-      console.error("Failed to fetch products:", err);
+      console.error('Failed to fetch products:', err);
     } finally {
       setLoading(false);
     }
