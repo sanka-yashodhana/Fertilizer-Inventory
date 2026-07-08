@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Product from "../../../_models/Product" // Adjust this import path depending on where you saved your models folder
+import "../../../_models/Supplier"; // Import for model registration
 
 // 1. GET ALL PRODUCTS
 export async function GET() {
