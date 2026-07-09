@@ -1,12 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { getAuth } from '@clerk/nextjs/server';
 import dbConnect from '@/lib/dbConnect';
 import Batch from '../../../_models/Batch';
 import Transaction from '../../../_models/Transaction';
-import Product from '../../../_models/Product';
 
 // 1. GET ALL TRANSACTIONS (HISTORICAL AUDIT LOG)
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const session = await getAuth(request);
   if (!session.userId) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
@@ -19,13 +18,14 @@ export async function GET(request: Request) {
       .populate('batch')
       .sort({ createdAt: -1 }); // Newest logs first
     return NextResponse.json({ success: true, data: transactions }, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ success: false, error: message }, { status: 400 });
   }
 }
 
 // 2. DISPATCH / DEDUCT STOCK (STOCK OUT ENGINE WITH FIFO PROCESSING)
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const session = await getAuth(request);
   if (!session.userId) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
@@ -89,7 +89,8 @@ export async function POST(request: Request) {
       data: processedTransactions 
     }, { status: 201 });
 
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ success: false, error: message }, { status: 400 });
   }
 }

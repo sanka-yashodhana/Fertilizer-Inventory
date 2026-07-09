@@ -28,13 +28,26 @@ interface ProductItem {
   minThreshold: number;
 }
 
+interface ProductFormData {
+  name: string;
+  sku: string;
+  category: string;
+  nitrogen: number;
+  phosphorus: number;
+  potassium: number;
+  minThreshold: number;
+  supplier: string;
+}
+
 export default function ProductsPage() {
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<ProductItem | null>(null);
 
   // Form State
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProductFormData>({
     name: '',
     sku: '',
     category: 'Inorganic',
@@ -42,7 +55,17 @@ export default function ProductsPage() {
     phosphorus: 0,
     potassium: 0,
     minThreshold: 10,
-    supplier: '65f8c3a2b1a4c927f8e4d2a1' // Dummy Object ID for testing until Supplier schema is populated
+    supplier: '65f8c3a2b1a4c927f8e4d2a1',
+  });
+  const [editFormData, setEditFormData] = useState<ProductFormData>({
+    name: '',
+    sku: '',
+    category: 'Inorganic',
+    nitrogen: 0,
+    phosphorus: 0,
+    potassium: 0,
+    minThreshold: 10,
+    supplier: '65f8c3a2b1a4c927f8e4d2a1',
   });
 
   // Fetch all products from your Next.js API
@@ -67,6 +90,76 @@ export default function ProductsPage() {
       console.error('Failed to fetch products:', err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  function openEditDialog(product: ProductItem) {
+    setEditingProduct(product);
+    setEditFormData({
+      name: product.name,
+      sku: product.sku,
+      category: product.category,
+      nitrogen: product.npkRatio.nitrogen,
+      phosphorus: product.npkRatio.phosphorus,
+      potassium: product.npkRatio.potassium,
+      minThreshold: product.minThreshold,
+      supplier: '65f8c3a2b1a4c927f8e4d2a1',
+    });
+    setEditOpen(true);
+  }
+
+  function closeEditDialog() {
+    setEditOpen(false);
+    setEditingProduct(null);
+  }
+
+  async function handleEditSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingProduct) return;
+
+    try {
+      const res = await fetch(`/api/products/${editingProduct._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editFormData.name,
+          sku: editFormData.sku,
+          category: editFormData.category,
+          npkRatio: {
+            nitrogen: Number(editFormData.nitrogen),
+            phosphorus: Number(editFormData.phosphorus),
+            potassium: Number(editFormData.potassium),
+          },
+          minThreshold: Number(editFormData.minThreshold),
+        }),
+      });
+
+      const json = await res.json();
+      if (json.success) {
+        closeEditDialog();
+        await fetchProducts();
+      } else {
+        alert(`Error updating product: ${json.error}`);
+      }
+    } catch (err) {
+      console.error('Failed to update product:', err);
+    }
+  }
+
+  async function handleDeleteProduct(productId: string) {
+    const confirmed = window.confirm('Delete this product? This will remove it permanently.');
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/products/${productId}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (json.success) {
+        await fetchProducts();
+      } else {
+        alert(`Error removing product: ${json.error}`);
+      }
+    } catch (err) {
+      console.error('Failed to delete product:', err);
     }
   }
 
@@ -195,6 +288,64 @@ export default function ProductsPage() {
             </form>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={editOpen} onOpenChange={(isOpen) => { if (!isOpen) closeEditDialog(); else setEditOpen(isOpen); }}>
+          <DialogContent className="sm:max-w-[425px]">
+            <form onSubmit={handleEditSubmit}>
+              <DialogHeader>
+                <DialogTitle>Edit Product</DialogTitle>
+                <DialogDescription>
+                  Update the master product profile and save any corrections.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-name">Product Name</Label>
+                  <Input id="edit-name" required value={editFormData.name} onChange={(e) => setEditFormData({...editFormData, name: e.target.value})} />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-sku">SKU Code</Label>
+                  <Input id="edit-sku" required value={editFormData.sku} onChange={(e) => setEditFormData({...editFormData, sku: e.target.value})} />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-category">Category</Label>
+                  <select
+                    id="edit-category"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    value={editFormData.category}
+                    onChange={(e) => setEditFormData({...editFormData, category: e.target.value})}
+                  >
+                    {CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="grid gap-1">
+                    <Label htmlFor="edit-nitrogen">N (%)</Label>
+                    <Input id="edit-nitrogen" type="number" min="0" value={editFormData.nitrogen} onChange={(e) => setEditFormData({...editFormData, nitrogen: Number(e.target.value)})} />
+                  </div>
+                  <div className="grid gap-1">
+                    <Label htmlFor="edit-phosphorus">P (%)</Label>
+                    <Input id="edit-phosphorus" type="number" min="0" value={editFormData.phosphorus} onChange={(e) => setEditFormData({...editFormData, phosphorus: Number(e.target.value)})} />
+                  </div>
+                  <div className="grid gap-1">
+                    <Label htmlFor="edit-potassium">K (%)</Label>
+                    <Input id="edit-potassium" type="number" min="0" value={editFormData.potassium} onChange={(e) => setEditFormData({...editFormData, potassium: Number(e.target.value)})} />
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-threshold">Low Stock Warning Limit</Label>
+                  <Input id="edit-threshold" type="number" min="0" value={editFormData.minThreshold} onChange={(e) => setEditFormData({...editFormData, minThreshold: Number(e.target.value)})} />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={closeEditDialog}>Cancel</Button>
+                <Button type="submit">Update Product</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Card className="border border-slate-200 shadow-sm">
@@ -209,7 +360,7 @@ export default function ProductsPage() {
             <p className="text-sm text-slate-500 animate-pulse">Loading product inventory matrix...</p>
           ) : products.length === 0 ? (
             <div className="text-center py-12 border border-dashed rounded-lg border-slate-200">
-              <p className="text-sm text-slate-500">No products configured yet. Click '+ Add New Product' to register your first profile.</p>
+              <p className="text-sm text-slate-500">No products configured yet. Click &apos;+ Add New Product&apos; to register your first profile.</p>
             </div>
           ) : (
             <>
@@ -222,6 +373,7 @@ export default function ProductsPage() {
                       <TableHead className="text-slate-500 uppercase tracking-wide text-xs">Category</TableHead>
                       <TableHead className="text-slate-500 uppercase tracking-wide text-xs">NPK Composition</TableHead>
                       <TableHead className="text-right text-slate-500 uppercase tracking-wide text-xs">Alert Threshold</TableHead>
+                      <TableHead className="text-right text-slate-500 uppercase tracking-wide text-xs">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -236,6 +388,10 @@ export default function ProductsPage() {
                         </TableCell>
                         <TableCell className="font-medium text-slate-700">{product.npkRatio.nitrogen}-{product.npkRatio.phosphorus}-{product.npkRatio.potassium}</TableCell>
                         <TableCell className="text-right text-slate-600 font-mono">{product.minThreshold} units</TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button variant="outline" size="xs" onClick={() => openEditDialog(product)}>Edit</Button>
+                          <Button variant="destructive" size="xs" onClick={() => handleDeleteProduct(product._id)}>Delete</Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -267,6 +423,10 @@ export default function ProductsPage() {
                           <p className="text-xs text-slate-500">Low Stock Alert Level</p>
                           <p className="text-sm font-semibold text-slate-900">{product.minThreshold} units</p>
                         </div>
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <Button variant="outline" size="xs" onClick={() => openEditDialog(product)}>Edit</Button>
+                        <Button variant="destructive" size="xs" onClick={() => handleDeleteProduct(product._id)}>Delete</Button>
                       </div>
                     </div>
                   </div>

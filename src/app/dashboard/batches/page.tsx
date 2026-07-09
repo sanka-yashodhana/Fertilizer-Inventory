@@ -22,7 +22,20 @@ interface BatchItem {
   currentQuantity: number;
   unit: string;
   costPrice: number;
+  manufactureDate: string;
   expiryDate: string;
+  storageLocation?: string;
+}
+
+interface BatchFormData {
+  batchNumber: string;
+  product: string;
+  quantityReceived: number;
+  unit: 'bags' | 'kg' | 'liters';
+  costPrice: number;
+  manufactureDate: string;
+  expiryDate: string;
+  storageLocation: string;
 }
 
 export default function BatchesPage() {
@@ -30,9 +43,21 @@ export default function BatchesPage() {
   const [products, setProducts] = useState<ProductOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingBatch, setEditingBatch] = useState<BatchItem | null>(null);
 
   // Form State
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<BatchFormData>({
+    batchNumber: '',
+    product: '',
+    quantityReceived: 0,
+    unit: 'bags',
+    costPrice: 0,
+    manufactureDate: '',
+    expiryDate: '',
+    storageLocation: ''
+  });
+  const [editFormData, setEditFormData] = useState<BatchFormData>({
     batchNumber: '',
     product: '',
     quantityReceived: 0,
@@ -78,6 +103,74 @@ export default function BatchesPage() {
       console.error('Data load failed:', err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  function openEditDialog(batch: BatchItem) {
+    setEditingBatch(batch);
+    setEditFormData({
+      batchNumber: batch.batchNumber,
+      product: batch.product?._id || '',
+      quantityReceived: batch.quantityReceived,
+      unit: batch.unit as 'bags' | 'kg' | 'liters',
+      costPrice: batch.costPrice,
+      manufactureDate: batch.manufactureDate ? new Date(batch.manufactureDate).toISOString().split('T')[0] : '',
+      expiryDate: batch.expiryDate ? new Date(batch.expiryDate).toISOString().split('T')[0] : '',
+      storageLocation: batch.storageLocation || '',
+    });
+    setEditOpen(true);
+  }
+
+  function closeEditDialog() {
+    setEditingBatch(null);
+    setEditOpen(false);
+  }
+
+  async function handleEditSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingBatch) return;
+
+    try {
+      const res = await fetch(`/api/batches/${editingBatch._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          batchNumber: editFormData.batchNumber,
+          product: editFormData.product,
+          quantityReceived: editFormData.quantityReceived,
+          unit: editFormData.unit,
+          costPrice: editFormData.costPrice,
+          manufactureDate: editFormData.manufactureDate,
+          expiryDate: editFormData.expiryDate,
+          storageLocation: editFormData.storageLocation,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        closeEditDialog();
+        await loadData();
+      } else {
+        alert(`Error updating batch: ${json.error}`);
+      }
+    } catch (err) {
+      console.error('Failed to update batch:', err);
+    }
+  }
+
+  async function handleDeleteBatch(batchId: string) {
+    const confirmed = window.confirm('Delete this batch? This will remove the batch record permanently.');
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/batches/${batchId}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (json.success) {
+        await loadData();
+      } else {
+        alert(`Error removing batch: ${json.error}`);
+      }
+    } catch (err) {
+      console.error('Failed to delete batch:', err);
     }
   }
 
@@ -158,7 +251,7 @@ export default function BatchesPage() {
                   </div>
                   <div className="grid gap-1">
                     <Label htmlFor="unit">Unit</Label>
-                    <select id="unit" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.unit} onChange={(e) => setFormData({...formData, unit: e.target.value})}>
+                    <select id="unit" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.unit} onChange={(e) => setFormData({...formData, unit: e.target.value as 'bags' | 'kg' | 'liters'})}>
                       <option value="bags">Bags</option>
                       <option value="kg">Kilograms (kg)</option>
                       <option value="liters">Liters</option>
@@ -183,6 +276,72 @@ export default function BatchesPage() {
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
                 <Button type="submit">Commit Stock In</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={editOpen} onOpenChange={(isOpen) => { if (!isOpen) closeEditDialog(); else setEditOpen(isOpen); }}>
+          <DialogContent className="sm:max-w-[425px]">
+            <form onSubmit={handleEditSubmit}>
+              <DialogHeader>
+                <DialogTitle>Edit Warehouse Batch</DialogTitle>
+                <DialogDescription>Adjust batch details without altering stock audit history.</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-product">Product Identity</Label>
+                  <select
+                    id="edit-product"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={editFormData.product}
+                    onChange={(e) => setEditFormData({...editFormData, product: e.target.value})}
+                  >
+                    {products.map(p => (
+                      <option key={p._id} value={p._id}>{p.name} ({p.sku})</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-batchNumber">Batch / Lot Number</Label>
+                  <Input id="edit-batchNumber" required value={editFormData.batchNumber} onChange={(e) => setEditFormData({...editFormData, batchNumber: e.target.value})} />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="grid gap-1">
+                    <Label htmlFor="edit-qty">Qty Received</Label>
+                    <Input id="edit-qty" type="number" min="0" value={editFormData.quantityReceived} onChange={(e) => setEditFormData({...editFormData, quantityReceived: Number(e.target.value)})} />
+                  </div>
+                  <div className="grid gap-1">
+                    <Label htmlFor="edit-unit">Unit</Label>
+                    <select id="edit-unit" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={editFormData.unit} onChange={(e) => setEditFormData({...editFormData, unit: e.target.value as 'bags' | 'kg' | 'liters'})}>
+                      <option value="bags">Bags</option>
+                      <option value="kg">Kilograms (kg)</option>
+                      <option value="liters">Liters</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-cost">Cost Price per Unit</Label>
+                  <Input id="edit-cost" type="number" min="0" value={editFormData.costPrice} onChange={(e) => setEditFormData({...editFormData, costPrice: Number(e.target.value)})} />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="grid gap-1">
+                    <Label htmlFor="edit-mfg">Mfg. Date</Label>
+                    <Input id="edit-mfg" type="date" value={editFormData.manufactureDate} onChange={(e) => setEditFormData({...editFormData, manufactureDate: e.target.value})} />
+                  </div>
+                  <div className="grid gap-1">
+                    <Label htmlFor="edit-exp">Exp. Date</Label>
+                    <Input id="edit-exp" type="date" value={editFormData.expiryDate} onChange={(e) => setEditFormData({...editFormData, expiryDate: e.target.value})} />
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-storage">Storage Location</Label>
+                  <Input id="edit-storage" value={editFormData.storageLocation} onChange={(e) => setEditFormData({...editFormData, storageLocation: e.target.value})} />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={closeEditDialog}>Cancel</Button>
+                <Button type="submit">Update Batch</Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -214,6 +373,7 @@ export default function BatchesPage() {
                       <TableHead className="text-slate-500 uppercase tracking-wide text-xs">Available Stock</TableHead>
                       <TableHead className="text-slate-500 uppercase tracking-wide text-xs">Unit Cost</TableHead>
                       <TableHead className="text-slate-500 uppercase tracking-wide text-xs">Expiry</TableHead>
+                      <TableHead className="text-right text-slate-500 uppercase tracking-wide text-xs">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -229,6 +389,10 @@ export default function BatchesPage() {
                             <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${isExpired ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'}`}>
                               {isExpired ? 'Expired' : `Expires ${new Date(b.expiryDate).toLocaleDateString()}`}
                             </span>
+                          </TableCell>
+                          <TableCell className="text-right space-x-2">
+                            <Button variant="outline" size="xs" onClick={() => openEditDialog(b)}>Edit</Button>
+                            <Button variant="destructive" size="xs" onClick={() => handleDeleteBatch(b._id)}>Delete</Button>
                           </TableCell>
                         </TableRow>
                       );
@@ -269,11 +433,14 @@ export default function BatchesPage() {
                             <p className="text-sm font-semibold text-slate-900">{new Date(b.expiryDate).toLocaleDateString()}</p>
                           </div>
                         </div>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <Button variant="outline" size="xs" onClick={() => openEditDialog(b)}>Edit</Button>
+                          <Button variant="destructive" size="xs" onClick={() => handleDeleteBatch(b._id)}>Delete</Button>
+                        </div>
                       </div>
                     </div>
                   );
-                })}
-              </div>
+                })}              </div>
             </>
           )}
         </CardContent>

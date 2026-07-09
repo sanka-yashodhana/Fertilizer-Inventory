@@ -3,11 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from '@/lib/utils';
 
 interface ProductOption { _id: string; name: string; sku: string; }
 interface LogItem {
@@ -25,6 +24,9 @@ export default function TransactionsPage() {
   const [products, setProducts] = useState<ProductOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<LogItem | null>(null);
+  const [editReason, setEditReason] = useState('');
 
   // Form State
   const [formData, setFormData] = useState({
@@ -72,7 +74,62 @@ export default function TransactionsPage() {
     }
   }
 
-  useEffect(() => { loadData(); }, []);
+  function openEditDialog(log: LogItem) {
+    setEditingTransaction(log);
+    setEditReason(log.reason || '');
+    setEditOpen(true);
+  }
+
+  function closeEditDialog() {
+    setEditingTransaction(null);
+    setEditReason('');
+    setEditOpen(false);
+  }
+
+  async function handleEditSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingTransaction) return;
+
+    try {
+      const res = await fetch(`/api/transactions/${editingTransaction._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: editReason }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        closeEditDialog();
+        await loadData();
+      } else {
+        alert(`Error updating transaction: ${json.error}`);
+      }
+    } catch (err) {
+      console.error('Failed to update transaction:', err);
+    }
+  }
+
+  async function handleDeleteTransaction(transactionId: string) {
+    const confirmed = window.confirm('Delete this transaction record? This will remove the audit line from history.');
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/transactions/${transactionId}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (json.success) {
+        await loadData();
+      } else {
+        alert(`Error deleting transaction: ${json.error}`);
+      }
+    } catch (err) {
+      console.error('Failed to delete transaction:', err);
+    }
+  }
+
+  useEffect(() => {
+    void (async () => {
+      await loadData();
+    })();
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -138,6 +195,27 @@ export default function TransactionsPage() {
             </form>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={editOpen} onOpenChange={(isOpen) => { if (!isOpen) closeEditDialog(); else setEditOpen(isOpen); }}>
+          <DialogContent className="sm:max-w-[425px]">
+            <form onSubmit={handleEditSubmit}>
+              <DialogHeader>
+                <DialogTitle>Edit Transaction Note</DialogTitle>
+                <DialogDescription>Adjust the reason text stored in the transaction audit line.</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="reason-edit">Reason / Notes</Label>
+                  <Input id="reason-edit" required value={editReason} onChange={(e) => setEditReason(e.target.value)} />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={closeEditDialog}>Cancel</Button>
+                <Button type="submit">Save Changes</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Card>
@@ -178,6 +256,10 @@ export default function TransactionsPage() {
                         <TableCell className="font-mono text-xs font-bold text-slate-500">{log.batch?.batchNumber || 'Global Adj.'}</TableCell>
                         <TableCell className="text-right font-semibold text-red-600">-{log.quantity}</TableCell>
                         <TableCell className="text-slate-600 text-sm truncate max-w-[200px] sm:max-w-[200px]">{log.reason}</TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button variant="outline" size="xs" onClick={() => openEditDialog(log)}>Edit</Button>
+                          <Button variant="destructive" size="xs" onClick={() => handleDeleteTransaction(log._id)}>Delete</Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -197,6 +279,10 @@ export default function TransactionsPage() {
                       <p className="text-sm text-slate-600">Lot: {log.batch?.batchNumber || 'Global Adj.'}</p>
                       <p className="text-sm text-slate-600">Volume Shift: <span className="font-semibold text-red-600">-{log.quantity}</span></p>
                       <p className="text-sm text-slate-600 truncate">{log.reason}</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button variant="outline" size="xs" onClick={() => openEditDialog(log)}>Edit</Button>
+                        <Button variant="destructive" size="xs" onClick={() => handleDeleteTransaction(log._id)}>Delete</Button>
+                      </div>
                     </div>
                   </div>
                 ))}

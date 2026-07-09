@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { getAuth } from '@clerk/nextjs/server';
 import dbConnect from '@/lib/dbConnect';
 import Product from '../../../_models/Product';
 import Batch from '../../../_models/Batch';
 import '../../../_models/Supplier'; // Import for model registration
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const session = await getAuth(request);
   if (!session.userId) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
