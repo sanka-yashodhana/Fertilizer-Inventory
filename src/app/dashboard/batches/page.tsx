@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -82,7 +82,9 @@ export default function BatchesPage() {
   }
 
   useEffect(() => {
-    loadData();
+    void (async () => {
+      await loadData();
+    })();
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -187,11 +189,14 @@ export default function BatchesPage() {
         </Dialog>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base font-semibold">Active Warehoused Batches ({batches.length})</CardTitle>
+      <Card className="border border-slate-200 shadow-sm">
+        <CardHeader className="gap-2">
+          <div>
+            <CardTitle className="text-base font-semibold">Active Warehoused Batches ({batches.length})</CardTitle>
+            <CardDescription>Inventory lots currently stored with available quantity, expiry status, and unit pricing.</CardDescription>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           {loading ? (
             <p className="text-sm text-slate-500 animate-pulse">Loading active warehouse batches...</p>
           ) : batches.length === 0 ? (
@@ -204,11 +209,11 @@ export default function BatchesPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Batch No</TableHead>
-                      <TableHead>Product</TableHead>
-                      <TableHead>Available Stock</TableHead>
-                      <TableHead>Unit Cost</TableHead>
-                      <TableHead>Expiration Status</TableHead>
+                      <TableHead className="text-slate-500 uppercase tracking-wide text-xs">Batch No</TableHead>
+                      <TableHead className="text-slate-500 uppercase tracking-wide text-xs">Product</TableHead>
+                      <TableHead className="text-slate-500 uppercase tracking-wide text-xs">Available Stock</TableHead>
+                      <TableHead className="text-slate-500 uppercase tracking-wide text-xs">Unit Cost</TableHead>
+                      <TableHead className="text-slate-500 uppercase tracking-wide text-xs">Expiry</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -216,14 +221,12 @@ export default function BatchesPage() {
                       const isExpired = new Date() > new Date(b.expiryDate);
                       return (
                         <TableRow key={b._id}>
-                          <TableCell className="font-mono text-xs font-bold text-slate-600">{b.batchNumber}</TableCell>
+                          <TableCell className="font-mono text-xs font-semibold text-slate-700">{b.batchNumber}</TableCell>
                           <TableCell className="font-medium text-slate-900">{b.product?.name || 'Unknown Product'}</TableCell>
-                          <TableCell className="font-semibold text-slate-700">
-                            {b.currentQuantity} / {b.quantityReceived} {b.unit}
-                          </TableCell>
-                          <TableCell>${b.costPrice}</TableCell>
+                          <TableCell className="text-slate-700">{b.currentQuantity} / {b.quantityReceived} {b.unit}</TableCell>
+                          <TableCell className="text-slate-700">${b.costPrice}</TableCell>
                           <TableCell>
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isExpired ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                            <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${isExpired ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'}`}>
                               {isExpired ? 'Expired' : `Expires ${new Date(b.expiryDate).toLocaleDateString()}`}
                             </span>
                           </TableCell>
@@ -237,20 +240,35 @@ export default function BatchesPage() {
                 {batches.map((b) => {
                   const isExpired = new Date() > new Date(b.expiryDate);
                   return (
-                    <div key={b._id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-xs font-semibold uppercase text-slate-500">Batch</p>
-                          <p className="font-mono text-sm font-semibold text-slate-900">{b.batchNumber}</p>
+                    <div key={b._id} className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 shadow-sm">
+                      <div className="bg-white px-4 py-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-xs font-semibold uppercase text-slate-500">Batch</p>
+                            <p className="font-mono text-sm font-semibold text-slate-900">{b.batchNumber}</p>
+                          </div>
+                          <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${isExpired ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                            {isExpired ? 'Expired' : `Expires ${new Date(b.expiryDate).toLocaleDateString()}`}
+                          </span>
                         </div>
-                        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${isExpired ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'}`}>
-                          {isExpired ? 'Expired' : `Expires ${new Date(b.expiryDate).toLocaleDateString()}`}
-                        </span>
-                      </div>
-                      <div className="mt-3 grid gap-2">
-                        <p className="text-sm font-semibold text-slate-900">{b.product?.name || 'Unknown Product'}</p>
-                        <p className="text-sm text-slate-600">Stock: {b.currentQuantity}/{b.quantityReceived} {b.unit}</p>
-                        <p className="text-sm text-slate-600">Cost: ${b.costPrice}</p>
+                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                          <div className="rounded-2xl bg-slate-50 p-3">
+                            <p className="text-xs text-slate-500">Product</p>
+                            <p className="text-sm font-semibold text-slate-900">{b.product?.name || 'Unknown Product'}</p>
+                          </div>
+                          <div className="rounded-2xl bg-slate-50 p-3">
+                            <p className="text-xs text-slate-500">Available</p>
+                            <p className="text-sm font-semibold text-slate-900">{b.currentQuantity}/{b.quantityReceived} {b.unit}</p>
+                          </div>
+                          <div className="rounded-2xl bg-slate-50 p-3">
+                            <p className="text-xs text-slate-500">Unit Cost</p>
+                            <p className="text-sm font-semibold text-slate-900">${b.costPrice}</p>
+                          </div>
+                          <div className="rounded-2xl bg-slate-50 p-3">
+                            <p className="text-xs text-slate-500">Expiry Date</p>
+                            <p className="text-sm font-semibold text-slate-900">{new Date(b.expiryDate).toLocaleDateString()}</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   );
