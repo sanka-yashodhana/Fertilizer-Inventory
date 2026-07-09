@@ -105,7 +105,7 @@ export default function TransactionsPage() {
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger render={
-            <Button className="bg-red-600 hover:bg-red-700 text-white">
+            <Button>
               📤 Record Stock Out (Dispatch)
             </Button>
           } />
@@ -133,7 +133,7 @@ export default function TransactionsPage() {
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button type="submit" className="bg-red-600 hover:bg-red-700 text-white">Approve and Deduct</Button>
+                <Button type="submit">Approve and Deduct</Button>
               </DialogFooter>
             </form>
           </DialogContent>

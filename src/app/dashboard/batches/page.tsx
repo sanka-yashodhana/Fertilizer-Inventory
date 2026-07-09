@@ -120,7 +120,7 @@ export default function BatchesPage() {
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger
             render={
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" />
+              <Button />
             }
           >
             📥 Stock In New Batch
@@ -180,7 +180,7 @@ export default function BatchesPage() {
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white">Commit Stock In</Button>
+                <Button type="submit">Commit Stock In</Button>
               </DialogFooter>
             </form>
           </DialogContent>

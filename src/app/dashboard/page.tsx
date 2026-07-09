@@ -43,35 +43,35 @@ export default function DashboardOverview() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 tracking-tight">System Status Overview</h2>
-        <p className="text-slate-500 text-sm">Real-time status metrics monitoring inventory counts and safety thresholds.</p>
+        <h2 className="text-2xl font-bold text-slate-900 tracking-tight text-center mb-2">Current Stock Status</h2>
+        <p className="text-slate-500 text-sm text-center">Track your stock levels and get live warnings for low or expiring items.</p>
       </div>
 
       {/* 🚀 Metrics Grid Row */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="pb-2"><CardTitle className="text-xs font-semibold uppercase text-slate-500">Master Product Catalog</CardTitle></CardHeader>
-          <CardContent><p className="text-3xl font-bold tracking-tight text-slate-900">{data.metrics.totalProducts} Profiles</p></CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-xs font-semibold uppercase text-slate-500 text-center">Master Product Catalog</CardTitle></CardHeader>
+          <CardContent><p className="text-3xl font-bold tracking-tight text-slate-900 text-center">{data.metrics.totalProducts} Profiles</p></CardContent>
         </Card>
         <Card className="border-l-4 border-l-emerald-500">
-          <CardHeader className="pb-2"><CardTitle className="text-xs font-semibold uppercase text-slate-500">Warehouse Batches</CardTitle></CardHeader>
-          <CardContent><p className="text-3xl font-bold tracking-tight text-slate-900">{data.metrics.activeBatchCount} Lots</p></CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-xs font-semibold uppercase text-slate-500 text-center">Warehouse Batches</CardTitle></CardHeader>
+          <CardContent><p className="text-3xl font-bold tracking-tight text-slate-900 text-center">{data.metrics.activeBatchCount} Lots</p></CardContent>
         </Card>
         <Card className={`border-l-4 ${data.metrics.lowStockCount > 0 ? 'border-l-amber-500 animate-pulse' : 'border-l-slate-300'}`}>
-          <CardHeader className="pb-2"><CardTitle className="text-xs font-semibold uppercase text-slate-500">Low Stock Flags</CardTitle></CardHeader>
-          <CardContent><p className="text-3xl font-bold tracking-tight text-slate-900">{data.metrics.lowStockCount} Products</p></CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-xs font-semibold uppercase text-slate-500 text-center">Low Stock Flags</CardTitle></CardHeader>
+          <CardContent><p className="text-3xl font-bold tracking-tight text-slate-900 text-center">{data.metrics.lowStockCount} Products</p></CardContent>
         </Card>
         <Card className={`border-l-4 ${data.metrics.expiringCount > 0 ? 'border-l-rose-500' : 'border-l-slate-300'}`}>
-          <CardHeader className="pb-2"><CardTitle className="text-xs font-semibold uppercase text-slate-500">Expiry Risk Alerts</CardTitle></CardHeader>
-          <CardContent><p className="text-3xl font-bold tracking-tight text-slate-900">{data.metrics.expiringCount} Batches</p></CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-xs font-semibold uppercase text-slate-500 text-center">Expiry Risk Alerts</CardTitle></CardHeader>
+          <CardContent><p className="text-3xl font-bold tracking-tight text-slate-900 text-center">{data.metrics.expiringCount} Batches</p></CardContent>
         </Card>
       </div>
 
       {/* ⚠️ Alerts Breakdown Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 ">
         {/* Low Stock Watchlist */}
         <Card>
-          <CardHeader><CardTitle className="text-base font-semibold text-amber-800 flex items-center gap-2">⚠️ Critical Stock Watchlist</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base font-semibold text-amber-800 flex items-center gap-2 ">⚠️ Critical Stock Watchlist</CardTitle></CardHeader>
           <CardContent>
             {data.alerts.lowStock.length === 0 ? (
               <p className="text-sm text-slate-500 py-4">All products are healthy and sit well above minimum safe volume levels.</p>

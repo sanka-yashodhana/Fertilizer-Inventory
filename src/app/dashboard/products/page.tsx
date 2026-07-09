@@ -129,7 +129,7 @@ export default function ProductsPage() {
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger
             render={
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" />
+              <Button />
             }
           >
             + Add New Product
@@ -188,7 +188,7 @@ export default function ProductsPage() {
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white">Save Product Blueprint</Button>
+                <Button type="submit">Save Product Blueprint</Button>
               </DialogFooter>
             </form>
           </DialogContent>

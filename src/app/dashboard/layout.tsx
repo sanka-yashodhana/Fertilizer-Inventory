@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import AuthControls from '@/components/AuthControls';
 
 const navLinks = [
@@ -16,10 +17,20 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const isActive = (href: string) => pathname === href || (href !== '/dashboard' && pathname?.startsWith(href));
+  const navClass = (href: string) => isActive(href)
+    ? 'rounded-full px-4 py-2 text-sm font-medium text-white bg-emerald-600 shadow-sm shadow-emerald-500/20'
+    : 'rounded-full px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700';
+  const drawerClass = (href: string) => isActive(href)
+    ? 'block rounded-lg px-4 py-3 text-sm font-medium text-white bg-slate-800 shadow-lg shadow-slate-900/20'
+    : 'block rounded-lg px-4 py-3 text-sm font-medium text-slate-100 transition hover:bg-slate-700';
+
   return (
     <div className="relative min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-20 bg-blue-950 border-b border-slate-200">
+      <header className="sticky top-0 z-20 bg-slate-900 border-b border-slate-200">
         <div className="mx-auto flex max-w-screen-2xl items-center justify-between gap-4 px-4 py-3 md:px-8">
           <div className="flex items-center gap-3">
             <button
@@ -30,7 +41,7 @@ export default function DashboardLayout({
             >
               ☰
             </button>
-            <Link href="/" className="text-2xl font-bold tracking-wider text-emerald-500">
+            <Link href="/" className="text-2xl font-bold tracking-wider text-green-500">
               🌱 Green Agro
             </Link>
           </div>
@@ -40,7 +51,7 @@ export default function DashboardLayout({
               <Link
                 key={link.href}
                 href={link.href}
-                className="rounded-full px-4 py-2 text-sm font-medium text-white transition hover:bg-green-800"
+                className={navClass(link.href)}
               >
                 {link.label}
               </Link>
@@ -63,7 +74,7 @@ export default function DashboardLayout({
           className={`fixed inset-y-0 left-0 z-40 w-72 transform bg-slate-900 p-6 text-white transition-transform duration-300 md:hidden ${drawerOpen ? 'translate-x-0' : '-translate-x-full'}`}
         >
           <div className="mb-6 flex items-center justify-between">
-            <span className="text-lg font-semibold text-emerald-300">Navigation</span>
+            <span className="text-lg font-semibold text-green-500">Navigation</span>
             <button
               type="button"
               className="rounded-md bg-slate-800 px-3 py-2 text-sm text-slate-200 hover:bg-slate-700"
@@ -78,7 +89,7 @@ export default function DashboardLayout({
               <Link
                 key={link.href}
                 href={link.href}
-                className="block rounded-lg px-4 py-3 text-sm font-medium text-slate-100 transition hover:bg-slate-800"
+                className={drawerClass(link.href)}
                 onClick={() => setDrawerOpen(false)}
               >
                 {link.label}
