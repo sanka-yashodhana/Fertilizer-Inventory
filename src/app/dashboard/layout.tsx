@@ -74,7 +74,7 @@ export default function DashboardLayout({
           className={`fixed inset-y-0 left-0 z-40 w-72 transform bg-slate-900 p-6 text-white transition-transform duration-300 md:hidden ${drawerOpen ? 'translate-x-0' : '-translate-x-full'}`}
         >
           <div className="mb-6 flex items-center justify-between">
-            <span className="text-lg font-semibold text-green-500">Navigation</span>
+            <span className="text-lg font-semibold text-green-500">🌱 Green Agro</span>
             <button
               type="button"
               className="rounded-md bg-slate-800 px-3 py-2 text-sm text-slate-200 hover:bg-slate-700"

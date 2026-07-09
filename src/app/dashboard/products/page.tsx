@@ -214,10 +214,10 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col items-center">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Product Catalog</h2>
-          <p className="text-slate-500 text-sm">Define base profiles, NPK attributes, and classifications here.</p>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight text-center md:text-3xl">Product Catalog</h2>
+          <p className="text-slate-500 text-sm text-center mb-6 md:mb-10">Define base profiles, NPK attributes, and classifications here.</p>
         </div>
 
         {/* Form Modal Popup */}

@@ -154,10 +154,10 @@ export default function TransactionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col items-center">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Transactions Log</h2>
-          <p className="text-slate-500 text-sm">Review full inventory logs or execute an operational deduction entry.</p>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight text-center md:text-3xl">Transactions Log</h2>
+          <p className="text-slate-500 text-sm text-center mb-6 md:mb-10">Check your history or take items out of stock.</p>
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
